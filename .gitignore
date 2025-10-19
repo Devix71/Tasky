@@ -1,3 +1,21 @@
+# .gitignore
+
+# Python
+__pycache__/
 *.pyc
+.env
+venv/
+
+# Database files
 *.db
-.gitignore
+*.sqlite3
+
+# IDE and OS files
+.vscode/
+.idea/
+*.DS_Store
+
+# A common pattern for local-only parameter files
+# (Even if you don't use one, this is good practice)
+*.local.json
+local.parameters.json
