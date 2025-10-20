@@ -36,7 +36,6 @@ param location string = resourceGroup().location
 var containerRegistryName = 'cr${uniqueString(resourceGroup().id)}'
 var sqlServerName = '${resourceBaseName}-sql'
 var sqlDatabaseName = 'taskreminders'
-// --- FIX: Corrected typo from 'resource' to 'resourceBaseName' ---
 var containerInstanceName = '${resourceBaseName}-aci'
 var virtualNetworkName = '${resourceBaseName}-vnet'
 var appGatewaySubnetName = 'AppGatewaySubnet'
@@ -199,6 +198,16 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
   location: location
   properties: {
     sku: { name: 'Standard_v2', tier: 'Standard_v2' }
+    gatewayIPConfigurations: [
+      {
+        name: 'appGatewayIpConfig'
+        properties: {
+          subnet: {
+            id: appGatewaySubnet.id
+          }
+        }
+      }
+    ]
     frontendIPConfigurations: [
       {
         name: 'appGatewayFrontendIP'
@@ -284,16 +293,12 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
       }
     ]
   }
-  dependsOn: [
-    containerInstance
-  ]
 }
 
 
 // ===================================================================================
 // OUTPUTS
 // ===================================================================================
-
 @description('The public FQDN of the Application Gateway. This is your new HTTPS endpoint.')
 output applicationGatewayFqdn string = publicIp.properties.dnsSettings.fqdn
 
