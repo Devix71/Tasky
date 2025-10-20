@@ -36,6 +36,7 @@ param location string = resourceGroup().location
 var containerRegistryName = 'cr${uniqueString(resourceGroup().id)}'
 var sqlServerName = '${resourceBaseName}-sql'
 var sqlDatabaseName = 'taskreminders'
+// --- FIX: Corrected typo from 'resource' to 'resourceBaseName' ---
 var containerInstanceName = '${resourceBaseName}-aci'
 var virtualNetworkName = '${resourceBaseName}-vnet'
 var appGatewaySubnetName = 'AppGatewaySubnet'
@@ -80,6 +81,15 @@ resource sqlFirewallRule 'Microsoft.Sql/servers/firewallRules@2023-02-01-preview
   properties: { startIpAddress: '0.0.0.0', endIpAddress: '0.0.0.0' }
 }
 
+resource sqlVnetRule 'Microsoft.Sql/servers/virtualNetworkRules@2023-02-01-preview' = {
+  parent: sqlServer
+  name: '${virtualNetworkName}-${containerSubnetName}-rule'
+  properties: {
+    virtualNetworkSubnetId: containerSubnet.id
+    ignoreMissingVnetServiceEndpoint: false
+  }
+}
+
 
 // --- 3. Networking Resources ---
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
@@ -116,6 +126,9 @@ resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' 
     serviceEndpoints: [
       {
         service: 'Microsoft.ContainerRegistry'
+      }
+      {
+        service: 'Microsoft.Sql'
       }
     ]
   }
@@ -175,7 +188,7 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2023-05-
     ]
   }
   dependsOn: [
-    sqlFirewallRule
+    sqlVnetRule
   ]
 }
 
@@ -271,6 +284,9 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
       }
     ]
   }
+  dependsOn: [
+    containerInstance
+  ]
 }
 
 
