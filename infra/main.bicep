@@ -1,3 +1,6 @@
+    @description('The tag for the container image to deploy.')
+param containerImageTag string = 'latest'
+
 @description('The secret key for signing JWT tokens. MUST be a strong, randomly generated string.')
 @secure()
 param jwtSecretKey string
@@ -77,7 +80,7 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2023-05-
       {
         name: 'task-reminder-api'
         properties: {
-          image: '${containerRegistry.name}.azurecr.io/task-reminder-api:latest'
+          image: '${containerRegistry.name}.azurecr.io/task-reminder-api:${containerImageTag}'
           ports: [
             {
               port: 8000
