@@ -34,8 +34,8 @@ jobs:
           subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
           resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
           template: ./infra/main.bicep
-          parameters: ./infra/main.parameters.json
-          overrideParameters: |
+          parameters: |
+            @./infra/main.parameters.json
             sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }}
             jwtSecretKey=${{ secrets.JWT_SECRET_KEY }}
             containerImageTag=${{ github.sha }}
