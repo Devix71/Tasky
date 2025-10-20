@@ -48,7 +48,7 @@ var appGatewayName = '${resourceBaseName}-agw'
 // RESOURCES
 // ===================================================================================
 
-// --- ACR and SQL Database ---
+// --- 1. Azure Container Registry ---
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
   name: containerRegistryName
   location: location
@@ -56,6 +56,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-01-01-pr
   properties: { adminUserEnabled: true }
 }
 
+// --- 2. Azure SQL Server and Database ---
 resource sqlServer 'Microsoft.Sql/servers@2023-02-01-preview' = {
   name: sqlServerName
   location: location
@@ -80,7 +81,7 @@ resource sqlFirewallRule 'Microsoft.Sql/servers/firewallRules@2023-02-01-preview
 }
 
 
-// --- Networking Resources ---
+// --- 3. Networking Resources ---
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
   name: virtualNetworkName
   location: location
@@ -126,10 +127,60 @@ resource publicIp 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
   sku: { name: 'Standard' }
   properties: {
     publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+      domainNameLabel: resourceBaseName
+    }
   }
 }
 
-// --- Application Gateway ---
+
+// --- 4. Azure Container Instance (Private) ---
+resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = {
+  name: containerInstanceName
+  location: location
+  properties: {
+    containers: [
+      {
+        name: 'task-reminder-api'
+        properties: {
+          image: '${containerRegistry.name}.azurecr.io/task-reminder-api:${containerImageTag}'
+          ports: [ { port: 8000, protocol: 'TCP' } ]
+          resources: { requests: { cpu: 1, memoryInGB: 2 } }
+          environmentVariables: [
+            {
+              name: 'DATABASE_URL'
+              #disable-next-line use-secure-value-for-secure-inputs
+              secureValue: 'Driver={ODBC Driver 18 for SQL Server};Server=tcp:${sqlServer.name}.database.windows.net,1433;Database=${sqlDatabaseName};Uid=${sqlAdminLogin};Pwd=${sqlAdminPassword};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
+            }
+            {
+              name: 'SECRET_KEY'
+              secureValue: jwtSecretKey
+            }
+          ]
+        }
+      }
+    ]
+    osType: 'Linux'
+    subnetIds: [
+      {
+        id: containerSubnet.id
+      }
+    ]
+    imageRegistryCredentials: [
+      {
+        server: containerRegistry.properties.loginServer
+        username: containerRegistry.name
+        password: containerRegistry.listCredentials().passwords[0].value
+      }
+    ]
+  }
+  dependsOn: [
+    sqlFirewallRule
+  ]
+}
+
+
+// --- 5. Application Gateway ---
 resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' = {
   name: appGatewayName
   location: location
@@ -155,7 +206,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
         properties: {
           backendAddresses: [
             {
-              fqdn: containerInstance.properties.ipAddress.fqdn
+              ipAddress: containerInstance.properties.ipAddress.ip
             }
           ]
         }
@@ -202,7 +253,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
         name: 'aciHealthProbe'
         properties: {
           protocol: 'Http'
-          host: containerInstance.properties.ipAddress.fqdn
+          host: containerInstance.properties.ipAddress.ip
           path: '/docs'
           interval: 30
           timeout: 10
@@ -220,52 +271,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
       }
     ]
   }
-}
-
-
-// --- Azure Container Instance ---
-resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = {
-  name: containerInstanceName
-  location: location
-  properties: {
-    containers: [
-      {
-        name: 'task-reminder-api'
-        properties: {
-          image: '${containerRegistry.name}.azurecr.io/task-reminder-api:${containerImageTag}'
-          ports: [ { port: 8000, protocol: 'TCP' } ]
-          resources: { requests: { cpu: 1, memoryInGB: 2 } }
-          environmentVariables: [
-            {
-              name: 'DATABASE_URL'
-              #disable-next-line use-secure-value-for-secure-inputs
-              secureValue: 'Driver={ODBC Driver 18 for SQL Server};Server=tcp:${sqlServer.name}.database.windows.net,1433;Database=${sqlDatabaseName};Uid=${sqlAdminLogin};Pwd=${sqlAdminPassword};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
-            }
-            {
-              name: 'SECRET_KEY'
-              secureValue: jwtSecretKey
-            }
-          ]
-        }
-      }
-    ]
-    osType: 'Linux'
-    subnetIds: [
-      {
-        id: containerSubnet.id
-      }
-    ]
-    imageRegistryCredentials: [
-      {
-        server: containerRegistry.properties.loginServer
-        username: containerRegistry.name
-        password: containerRegistry.listCredentials().passwords[0].value
-      }
-    ]
-  }
-  dependsOn: [
-    sqlFirewallRule
-  ]
 }
 
 
