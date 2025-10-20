@@ -48,7 +48,7 @@ var appGatewayName = '${resourceBaseName}-agw'
 // RESOURCES
 // ===================================================================================
 
-// --- (ACR and SQL Database ---
+// --- ACR and SQL Database ---
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
   name: containerRegistryName
   location: location
@@ -110,6 +110,11 @@ resource containerSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-05-01' 
         properties: {
           serviceName: 'Microsoft.ContainerInstance/containerGroups'
         }
+      }
+    ]
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.ContainerRegistry'
       }
     ]
   }
