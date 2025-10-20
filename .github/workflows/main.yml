@@ -58,7 +58,7 @@ jobs:
         with:
           subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
           resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
-          location: ${{ secrets.AZURE_REGION }}
+          region: ${{ secrets.AZURE_REGION }}
           template: ./infra/main.bicep
           parameters: 'sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }} jwtSecretKey=${{ secrets.JWT_SECRET_KEY }} appGatewayCertificateData=${{ secrets.APP_GATEWAY_CERT_DATA }} appGatewayCertificatePassword=${{ secrets.APP_GATEWAY_CERT_PASSWORD }}'
           deploymentMode: Incremental
@@ -83,7 +83,7 @@ jobs:
         with:
           subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
           resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
-          location: ${{ secrets.AZURE_REGION }}
+          region: ${{ secrets.AZURE_REGION }}
           template: ./infra/main.bicep
           parameters: 'sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }} jwtSecretKey=${{ secrets.JWT_SECRET_KEY }} containerImageTag=${{ github.sha }} appGatewayCertificateData=${{ secrets.APP_GATEWAY_CERT_DATA }} appGatewayCertificatePassword=${{ secrets.APP_GATEWAY_CERT_PASSWORD }}'
           deploymentMode: Incremental
