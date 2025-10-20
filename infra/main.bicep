@@ -132,8 +132,5 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2023-05-
 @description('The public IP address of the container instance.')
 output containerIpAddress string = containerInstance.properties.ipAddress.ip ?? 'IP not available'
 
-@description('The FQDN of the container instance.')
-output containerFqdn string = containerInstance.properties.ipAddress.fqdn ?? 'FQDN not assigned'
-
 @description('Login server for the Azure Container Registry.')
 output acrLoginServer string = containerRegistry.properties.loginServer
