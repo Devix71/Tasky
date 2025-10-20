@@ -57,13 +57,13 @@ jobs:
           docker build . -t ${{ secrets.ACR_NAME }}.azurecr.io/task-reminder-api:${{ github.sha }}
           docker push ${{ secrets.ACR_NAME }}.azurecr.io/task-reminder-api:${{ github.sha }}
 
-- name: Deploy Bicep template
-        uses: azure/arm-deploy@v2
-        with:
-          subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
-          resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
-          template: ./infra/main.bicep
-          parameters: 'sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }} jwtSecretKey=${{ secrets.JWT_SECRET_KEY }} containerImageTag=${{ github.sha }}'
+      - name: Deploy Bicep template
+              uses: azure/arm-deploy@v2
+              with:
+                subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+                resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
+                template: ./infra/main.bicep
+                parameters: 'sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }} jwtSecretKey=${{ secrets.JWT_SECRET_KEY }} containerImageTag=${{ github.sha }}'
 
       - name: Logout from Azure
         run: az logout
