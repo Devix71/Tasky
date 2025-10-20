@@ -50,14 +50,16 @@ jobs:
 
       - name: Wait for Resource Group deletion to complete
         run: az group wait --name ${{ secrets.RESOURCE_GROUP_NAME }} --deleted
-
-      # --- STEP 1: DEPLOY INFRASTRUCTURE ---
+      
+      # --- STEP 1: DEPLOY INFRASTRUCTURE (FIRST PASS) ---
       - name: Deploy Bicep Infrastructure
         id: deploy_infra
         uses: azure/arm-deploy@v2
         with:
           subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
           resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
+          # --- FIX: Tell the action WHERE to create the resource group ---
+          location: ${{ secrets.AZURE_REGION }}
           template: ./infra/main.bicep
           parameters: 'sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }} jwtSecretKey=${{ secrets.JWT_SECRET_KEY }} appGatewayCertificateData=${{ secrets.APP_GATEWAY_CERT_DATA }} appGatewayCertificatePassword=${{ secrets.APP_GATEWAY_CERT_PASSWORD }}'
           deploymentMode: Incremental
@@ -76,12 +78,13 @@ jobs:
           docker build . -t ${{ fromJson(steps.deploy_infra.outputs.outputs).acrLoginServer.value }}/task-reminder-api:${{ github.sha }}
           docker push ${{ fromJson(steps.deploy_infra.outputs.outputs).acrLoginServer.value }}/task-reminder-api:${{ github.sha }}
 
-      # --- STEP 4: UPDATE THE INFRASTRUCTURE ---
+      # --- STEP 4: UPDATE THE INFRASTRUCTURE (SECOND PASS) ---
       - name: Update Container Instance with New Image Tag
         uses: azure/arm-deploy@v2
         with:
           subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
           resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
+          location: ${{ secrets.AZURE_REGION }}
           template: ./infra/main.bicep
           parameters: 'sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }} jwtSecretKey=${{ secrets.JWT_SECRET_KEY }} containerImageTag=${{ github.sha }} appGatewayCertificateData=${{ secrets.APP_GATEWAY_CERT_DATA }} appGatewayCertificatePassword=${{ secrets.APP_GATEWAY_CERT_PASSWORD }}'
           deploymentMode: Incremental
