@@ -1,3 +1,7 @@
+@description('The secret key for signing JWT tokens. MUST be a strong, randomly generated string.')
+@secure()
+param jwtSecretKey string
+
 @description('The base name for all resources. Must be globally unique.')
 param resourceBaseName string = 'taskrem${uniqueString(resourceGroup().id)}'
 
@@ -91,6 +95,10 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2023-05-
               name: 'DATABASE_URL'
               #disable-next-line use-secure-value-for-secure-inputs
               secureValue: 'Driver={ODBC Driver 18 for SQL Server};Server=tcp:${sqlServer.name}.database.windows.net,1433;Database=${sqlDatabaseName};Uid=${sqlAdminLogin};Pwd=${sqlAdminPassword};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
+            }
+            {
+               name: 'SECRET_KEY'
+               secureValue: jwtSecretKey
             }
           ]
         }

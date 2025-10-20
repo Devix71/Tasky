@@ -4,6 +4,9 @@
   "parameters": {
     "sqlAdminPassword": {
       "value": ""
+    },
+    "jwtSecretKey": {
+      "value": ""
     }
   }
 }
