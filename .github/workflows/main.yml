@@ -30,7 +30,7 @@ jobs:
         run: poetry run pytest
 
   # ===============================================
-  #  JOB 2: Build and Deploy
+  #  JOB 2: Build and Deploy (Simplified)
   # ===============================================
   deploy:
     needs: test
@@ -45,44 +45,19 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # --- FIX: ADD THIS BLOCK TO ENSURE A CLEAN SLATE ---
-      - name: Delete existing Resource Group to prevent conflicts
-        continue-on-error: true
-        run: az group delete --name ${{ secrets.RESOURCE_GROUP_NAME }} --yes --no-wait
-
-      - name: Wait for Resource Group deletion to complete
-        continue-on-error: true
-        run: az group wait --name ${{ secrets.RESOURCE_GROUP_NAME }} --deleted
-
-      
-      # --- STEP 1: DEPLOY INFRASTRUCTURE (FIRST PASS) ---
-      - name: Deploy Bicep Infrastructure
-        id: deploy_infra
-        uses: azure/arm-deploy@v2
-        with:
-          subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
-          resourceGroupName: ${{ secrets.RESOURCE_GROUP_NAME }}
-          region: ${{ secrets.AZURE_REGION }}
-          template: ./infra/main.bicep
-          parameters: 'sqlAdminPassword=${{ secrets.AZURE_SQL_PASSWORD }} jwtSecretKey=${{ secrets.JWT_SECRET_KEY }} appGatewayCertificateData=${{ secrets.APP_GATEWAY_CERT_DATA }} appGatewayCertificatePassword=${{ secrets.APP_GATEWAY_CERT_PASSWORD }}'
-          deploymentMode: Incremental
-
-      # --- STEP 2: LOG IN TO THE NEWLY CREATED ACR ---
       - name: Log in to Azure Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ fromJson(steps.deploy_infra.outputs.outputs).acrLoginServer.value }}
+          registry: ${{ secrets.ACR_NAME }}.azurecr.io
           username: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
           password: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
       
-      # --- STEP 3: BUILD AND PUSH THE REAL IMAGE ---
       - name: Build and push Docker image
         run: |
-          docker build . -t ${{ fromJson(steps.deploy_infra.outputs.outputs).acrLoginServer.value }}/task-reminder-api:${{ github.sha }}
-          docker push ${{ fromJson(steps.deploy_infra.outputs.outputs).acrLoginServer.value }}/task-reminder-api:${{ github.sha }}
+          docker build . -t ${{ secrets.ACR_NAME }}.azurecr.io/task-reminder-api:${{ github.sha }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/task-reminder-api:${{ github.sha }}
 
-      # --- STEP 4: UPDATE THE INFRASTRUCTURE (SECOND PASS) ---
-      - name: Update Container Instance with New Image Tag
+      - name: Deploy Bicep template (Incremental Update)
         uses: azure/arm-deploy@v2
         with:
           subscriptionId: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
