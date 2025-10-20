@@ -45,11 +45,15 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # --- FIX: ADD THIS BLOCK TO ENSURE A CLEAN SLATE ---
       - name: Delete existing Resource Group to prevent conflicts
+        continue-on-error: true
         run: az group delete --name ${{ secrets.RESOURCE_GROUP_NAME }} --yes --no-wait
 
       - name: Wait for Resource Group deletion to complete
+        continue-on-error: true
         run: az group wait --name ${{ secrets.RESOURCE_GROUP_NAME }} --deleted
+
       
       # --- STEP 1: DEPLOY INFRASTRUCTURE (FIRST PASS) ---
       - name: Deploy Bicep Infrastructure
