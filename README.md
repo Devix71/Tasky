@@ -96,7 +96,7 @@ Once these secrets are configured, any push to the `main` branch will automatica
 
 After deployment, the API is available at the FQDN provided as an output of the deployment. You can find this in the GitHub Actions log or in the Azure Portal on the Container Instance's overview page.
 
-**Base URL:** `http://<placeholder>.azurecontainer.io:8000`
+**Base URL:** `http://taskrem4wyxclgjd4dxo.swedencentral.azurecontainer.io:8000`
 
     
 # Task Reminder API
