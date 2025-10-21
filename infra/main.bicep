@@ -110,6 +110,7 @@ resource containerInstance 'Microsoft.ContainerInstance/containerGroups@2023-05-
     osType: 'Linux'
     ipAddress: {
       type: 'Public'
+      dnsNameLabel: resourceBaseName
       ports: [
         {
           port: 8000
