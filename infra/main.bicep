@@ -197,7 +197,11 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
   name: appGatewayName
   location: location
   properties: {
-    sku: { name: 'Standard_v2', tier: 'Standard_v2' }
+    sku: {
+      name: 'Standard_v2'
+      tier: 'Standard_v2'
+      capacity: 2
+    }
     gatewayIPConfigurations: [
       {
         name: 'appGatewayIpConfig'
@@ -299,6 +303,7 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2023-05-01' =
 // ===================================================================================
 // OUTPUTS
 // ===================================================================================
+
 @description('The public FQDN of the Application Gateway. This is your new HTTPS endpoint.')
 output applicationGatewayFqdn string = publicIp.properties.dnsSettings.fqdn
 
